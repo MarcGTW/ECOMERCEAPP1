@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DressCode Luxe | GoF 15 Ultimate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #2563eb; --dark: #0f172a; --gray: #64748b; --bg: #f8fafc; --card-bg: #ffffff; --danger: #ef4444; --success: #10b981; }
+        [data-theme="dark"] { --bg: #0f172a; --dark: #f8fafc; --gray: #94a3b8; --card-bg: #1e293b; }
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--dark); margin: 0; transition: 0.3s; }
+        
+        nav { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; padding: 1.2rem 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 800; }
+
+        .controls { display: flex; gap: 15px; }
+        .cart-trigger { cursor: pointer; padding: 10px 24px; background: var(--accent); color: white; border-radius: 50px; font-weight: 600; border: none; }
+
+        /* Стили для новой шпаргалки */
+        .guide-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 4000; backdrop-filter: blur(10px); }
+        .guide-content { background: var(--card-bg); width: 90%; max-width: 900px; height: 80vh; border-radius: 30px; padding: 2rem; overflow-y: auto; color: var(--dark); position: relative; }
+        .pattern-section { margin-bottom: 2rem; border-left: 4px solid var(--accent); padding-left: 1.5rem; }
+        .pattern-card { background: rgba(0,0,0,0.03); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .file-badge { font-family: monospace; background: var(--dark); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+
+        /* Остальные стили */
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2.5rem; padding: 2rem 5%; }
+        .card { background: var(--card-bg); border-radius: 24px; padding: 1.5rem; transition: 0.4s; cursor: pointer; border: 1px solid rgba(0,0,0,0.05); }
+        .card:hover { transform: translateY(-10px); border-color: var(--accent); }
+        .img-container { background: rgba(0,0,0,0.05); height: 250px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+        
+        .sidebar { position: fixed; right: -100%; top: 0; width: 420px; height: 100vh; background: var(--card-bg); z-index: 2000; box-shadow: -20px 0 60px rgba(0,0,0,0.2); transition: 0.4s; display: flex; flex-direction: column; }
+        .sidebar.active { right: 0; }
+        
+        .cart-item { display: flex; justify-content: space-between; padding: 1rem; background: rgba(0,0,0,0.03); border-radius: 16px; margin-bottom: 1rem; }
+        .pattern-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; }
+        .tool-btn { font-size: 10px; padding: 10px; border: 1px solid var(--gray); border-radius: 12px; cursor: pointer; background: transparent; color: var(--dark); font-weight: 600; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 3000; }
+        .modal-content { background: var(--card-bg); padding: 2.5rem; border-radius: 32px; width: 90%; max-width: 750px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 2.5rem; position: relative; }
+        
+        .checkout-btn { background: var(--accent); color: white; border: none; padding: 1.2rem; border-radius: 18px; font-weight: 700; cursor: pointer; width: 100%; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: none; z-index: 1500; }
+        .overlay.active { display: block; }
+
+        #pattern-monitor { position: fixed; bottom: 20px; left: 20px; background: rgba(15, 23, 42, 0.9); color: #10b981; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 11px; width: 350px; z-index: 2000; border-left: 4px solid var(--accent); }
+    </style>
+</head>
+<body data-theme="light">
+
+<nav>
+    <div class="logo">DRESSCODE LUXE.</div>
+    <div class="controls">
+        <button class="tool-btn" style="background: var(--success); color: white; border: none;" onclick="toggleGuide()">📖 Pattern Guide</button>
+        <button class="tool-btn" onclick="toggleTheme()">🌓 Theme</button>
+        <div class="cart-trigger" onclick="toggleCart()">🛒 Корзина (<span id="count">0</span>)</div>
+    </div>
+</nav>
+
+<div class="guide-modal" id="guideModal">
+    <div class="guide-content">
+        <button onclick="toggleGuide()" style="position:absolute; top:20px; right:20px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--dark)">✕</button>
+        <h2 style="margin-top:0">Архитектура GoF Паттернов</h2>
+        <p style="color:var(--gray)">Наглядная связь между кодом C# и теорией проектирования.</p>
+
+        <div class="pattern-section">
+            <h3 style="color:var(--accent)">1. Порождающие (Creational)</h3>
+            <div class="pattern-card">
+                <div><b>Singleton</b><br><small>Глобальный доступ к складу товаров</small></div>
+                <span class="file-badge">InventoryManager.cs</span>
+            </div>
+            <div class="pattern-card">
+                <div><b>Factory Method</b><br><small>Создание Clothing или Shoes по типу</small></div>
+                <span class="file-badge">ProductFactory.cs</span>
+            </div>
+            <div class="pattern-card">
+                <div><b>Abstract Factory</b><br><small>Семейство элементов Dark/Light темы</small></div>
+                <span class="file-badge">ThemeFactory.cs</span>
+            </div>
+            <div class="pattern-card">
+                <div><b>Builder</b><br><small>Пошаговая сборка заказа с адресом</small></div>
+                <span class="file-badge">OrderBuilder.cs</span>
+            </div>
+            <div class="pattern-card">
+                <div><b>Prototype</b><br><small>Клонирование шаблонов для "Повторить заказ"</small></div>
+                <span class="file-badge">ProductPrototype.cs</span>
+            </div>
+        </div>
+
+        <div class="pattern-section" style="border-color: var(--success)">
+            <h3 style="color:var(--success)">2. Структурные (Structural)</h3>
+            <div class="pattern-card">
+                <div><b>Facade</b><br><small>Единый вход в систему оформления</small></div>
+                <span class="file-badge">OrderFacade.cs</span>
+            </div>
+            <div class="pattern-card">
+                <div><b>Adapter</b><br><small>Связь с внешней платежной системой</small></div>
+                <span class="file-badge">ExternalPaymentAdapter.cs</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="products-grid" id="catalog"></div>
+
+<div class="modal" id="productModal">
+    <div class="modal-content">
+        <button onclick="closeModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--dark)">✕</button>
+        <div class="img-container" id="modalImg"></div>
+        <div>
+            <h1 id="modalTitle" style="margin-top:0"></h1>
+            <p id="modalPrice" style="font-size: 1.8rem; color: var(--accent); font-weight: 800;"></p>
+            <p id="modalDesc" style="color: var(--gray); line-height: 1.6;"></p>
+            <button class="checkout-btn" onclick="confirmAdd()">Добавить в корзину</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+<div class="sidebar" id="sidebar">
+    <div style="padding: 2rem; border-bottom: 1px solid rgba(0,0,0,0.05);"><h2>Твой Заказ</h2></div>
+    <div id="cart-list" style="flex-grow:1; overflow-y:auto; padding: 2rem;"></div>
+    <div style="padding: 2rem; border-top: 1px solid rgba(0,0,0,0.05);">
+        <div class="pattern-tools">
+            <button class="tool-btn" onclick="undo()">↩ Undo (Command)</button>
+            <button class="tool-btn" id="strat-btn" onclick="toggleDiscount()">🎁 VIP (Strategy)</button>
+        </div>
+        <div id="total" style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem;">Итого: 0 ₽</div>
+        <button class="checkout-btn" id="orderBtn" onclick="processOrder()" disabled>ОФОРМИТЬ (FACADE)</button>
+    </div>
+</div>
+
+<div id="pattern-monitor"></div>
+
+<script>
+    let cart = [];
+    let products = [];
+    let history = []; 
+    let selectedProduct = null;
+    let vipDiscount = false;
+
+    // Функция открытия шпаргалки
+    function toggleGuide() {
+        const modal = document.getElementById('guideModal');
+        modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    async function init() {
+        logPattern("Singleton", "InventoryManager: Готов к работе");
+        try {
+            const res = await fetch('/api/shop/products');
+            products = await res.json();
+            renderProducts();
+        } catch (e) { logPattern("Error", "Бэкенд не доступен"); }
+    }
+
+    function renderProducts() {
+        document.getElementById('catalog').innerHTML = products.map((p, i) => `
+            <div class="card" onclick="openModal(${i})">
+                <div class="img-container">${p.icon}</div>
+                <h3 style="margin:15px 0 5px">${p.name}</h3>
+                <p style="font-weight:700; color:var(--gray); margin:0">${p.price} ₽</p>
+            </div>
+        `).join('');
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        logPattern("Abstract Factory", isDark ? "LightThemeFactory" : "DarkThemeFactory");
+    }
+
+    function openModal(i) {
+        selectedProduct = products[i];
+        document.getElementById('modalTitle').innerText = selectedProduct.name;
+        document.getElementById('modalPrice').innerText = selectedProduct.price + " ₽";
+        document.getElementById('modalDesc').innerText = selectedProduct.description;
+        document.getElementById('modalImg').innerText = selectedProduct.icon;
+        document.getElementById('productModal').style.display = 'flex';
+        logPattern("Proxy", "Контроль доступа к данным продукта");
+    }
+
+    function closeModal() { document.getElementById('productModal').style.display = 'none'; }
+
+    function confirmAdd() {
+        history.push(JSON.stringify(cart));
+        cart.push({ ...selectedProduct, cartId: Date.now() });
+        logPattern("Prototype", "Клонирование объекта через Clone()");
+        closeModal();
+        updateUI();
+    }
+
+    function undo() {
+        if (history.length > 0) {
+            cart = JSON.parse(history.pop());
+            logPattern("Command", "Откат состояния (Memento/Command)");
+            updateUI();
+        }
+    }
+
+    function toggleDiscount() {
+        vipDiscount = !vipDiscount;
+        document.getElementById('strat-btn').classList.toggle('active');
+        logPattern("Strategy", vipDiscount ? "Применена скидка 10%" : "Базовая цена");
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('count').innerText = cart.length;
+        const list = document.getElementById('cart-list');
+        list.innerHTML = cart.map(i => `
+            <div class="cart-item">
+                <div><b>${i.name}</b><br><small>${i.price} ₽</small></div>
+                <button onclick="removeFromCart(${i.cartId})" style="border:none; background:none; color:var(--danger); cursor:pointer">✕</button>
+            </div>
+        `).join('');
+
+        let sum = cart.reduce((a, b) => a + b.price, 0);
+        if (vipDiscount) sum *= 0.9;
+        document.getElementById('total').innerText = `Итого: ${Math.round(sum)} ₽`;
+        document.getElementById('orderBtn').disabled = cart.length === 0;
+        logPattern("Observer", "Notify(): Интерфейс синхронизирован");
+    }
+
+    function removeFromCart(id) {
+        history.push(JSON.stringify(cart));
+        cart = cart.filter(i => i.cartId !== id);
+        updateUI();
+    }
+
+    function toggleCart() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    async function processOrder() {
+        logPattern("Facade", "OrderFacade: Запуск цепочки проверок");
+        const itemsForServer = cart.map(i => ({ Name: i.name, Price: i.price }));
+        try {
+            const res = await fetch('/api/shop/checkout', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ Items: itemsForServer })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("УСПЕХ!\n" + data.details);
+                cart = []; history = []; updateUI(); toggleCart();
+            }
+        } catch (e) { alert("Ошибка связи с сервером."); }
+    }
+
+    function logPattern(name, desc) {
+        const monitor = document.getElementById('pattern-monitor');
+        const entry = document.createElement('div');
+        entry.style.marginBottom = '5px';
+        entry.innerHTML = `<span style="color:#2563eb">[${name}]</span> ${desc}`;
+        monitor.prepend(entry);
+        if (monitor.children.length > 8) monitor.lastChild.remove();
+    }
+
+    init();
+</script>
+</body>
+</html>
